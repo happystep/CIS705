@@ -27,29 +27,29 @@ fun getOp #"+" = SOME (fn v1 => fn v2 => v1 + v2)
 fun interpret registers stack current display = let
   fun process ch  = 
      if is_digit(ch) 
-     then interpret   (* MODIFY! *)
+     then interpret   
             registers 
             stack 
             (ch::current)
             (Int.toString(digits2int(ch::current)))
      else if ch = #"E"
-     then interpret   (* MODIFY! *)
+     then interpret   
             registers 
             stack 
             (tl(current))
             (Int.toString(digits2int(tl(current))))
      else if ch = #"C"
-     then interpret     (* MODIFY! *)
+     then interpret    
             registers 
             [] 
             current
-            (Int.toString(digits2int(current)))
-     else if ch = #"Z"  (* MODIFY! *)
+            "The stack is cleared!"
+     else if ch = #"Z"  
      then interpret 
-            registers 
-            stack 
+            (fn i => 0) 
+            []
             current
-            "*** clear the stack and the registers!"
+            "The stack and the registers are cleared!"
      else if ch = #"X"
      then (print "Thanks for using the CIS505/705 calculator! Bye\n"; ())
      else let  (* we know that the number currently being typed, if any,
@@ -82,15 +82,15 @@ fun interpret registers stack current display = let
             SOME oper => 
               interpret   (* MODIFY! *)
                 registers
-                stack'
+                (tl(tl(stack')))
                 current
-                "*** apply the operator to the top two stack elements"
+                (Int.toString(      (    hd(    tl(    stack') )  (hd(stack')) )))
            | NONE => interpret 
                        registers stack current
                        "Error: the input character is not a valid symbol"
      end
    in
-  (print (display^"\n");
+  (print (display^"\n? ");
    case (TextIO.inputLine TextIO.stdIn) of
     (SOME line) => (case explode line of
         [ch,#"\n"] => process ch    (* Call the main function *)
