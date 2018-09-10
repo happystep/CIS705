@@ -1,6 +1,9 @@
 (* SKELETON INTERPRETER FOR A SMALL INTERACTIVE CALCULATOR 
      CIS505/705, K-State, Fall 2018 *)
 
+     (* Skeleton Written by: Dr. Amtoft
+          Modified by: Luis Bobadilla     *)
+
 (* General Functions *)
 
 fun is_digit c = #"0" <= c andalso c <= #"9"
