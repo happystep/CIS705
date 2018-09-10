@@ -6,6 +6,10 @@
 
 (* General Functions *)
 
+fun remove_top stack = case stack of
+  [] => []   (* nothing to remove *)
+| (v :: stack) => stack
+
 fun is_digit c = #"0" <= c andalso c <= #"9"
 
 fun digit2int d = (* assumes d is a digit *)   
@@ -73,8 +77,8 @@ fun interpret registers stack current display = let
      then interpret     (* MODIFY! *)
           (let
             val j = hd(stack') in
-            (fn j =>  if j = (hd(stack')) then (hd(tl(stack')))  else j ) end )
-            (tl(stack'))
+            (fn j =>  if j = (hd(stack')) then (hd(tl(stack')))  else registers j ) end )
+            (remove_top(tl(stack')))
             (tl(current))
             ("The number " ^(Int.toString(hd(tl(stack'))))^ " is now stored to register "^(Int.toString(hd(stack'))))
      else if ch = #"R"  (* MODIFY! *)
