@@ -86,8 +86,8 @@ fun interpret registers stack current display = let
             SOME oper => 
               interpret   (* MODIFY! *)
                 registers
-                (tl(tl(stack')))
-                current
+                (oper (hd(    tl(    stack'))) (hd(stack')) :: (tl(tl(stack'))))
+                []
                 (Int.toString(  oper (hd(    tl(    stack'))) (hd(stack'))   ))
            | NONE => interpret 
                        registers stack current
