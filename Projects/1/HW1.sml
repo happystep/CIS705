@@ -72,6 +72,7 @@ fun interpret registers stack current display = let
      else if ch = #"S"
      then interpret     (* MODIFY! *)
             registers
+            (* (fn j =>  if j = (hd(stack')) then (hd(tl(stack')))  else j )    *)
             stack'
             current
             "*** store the element just below the top of the stack in the register whose number is at the top!"
@@ -87,7 +88,7 @@ fun interpret registers stack current display = let
                 registers
                 (tl(tl(stack')))
                 current
-                (Int.toString(      (    hd(    tl(    stack') )  (hd(stack')) )))
+                (Int.toString(  oper (hd(    tl(    stack'))) (hd(stack'))   ))
            | NONE => interpret 
                        registers stack current
                        "Error: the input character is not a valid symbol"
