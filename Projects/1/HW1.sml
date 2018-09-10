@@ -71,20 +71,26 @@ fun interpret registers stack current display = let
              else "The number "^(Int.toString data)^ " is now on the stack")
      else if ch = #"S"
      then interpret     (* MODIFY! *)
-            registers
-            (* (fn j =>  if j = (hd(stack')) then (hd(tl(stack')))  else j )    *)
-            stack'
-            current
-            "*** store the element just below the top of the stack in the register whose number is at the top!"
+          (let
+            val j = hd(stack') in
+            (fn j =>  if j = (hd(stack')) then (hd(tl(stack')))  else j ) end )
+            (tl(stack'))
+            (tl(current))
+            ("The number " ^(Int.toString(hd(tl(stack'))))^ " is now stored to register "^(Int.toString(hd(stack'))))
      else if ch = #"R"  (* MODIFY! *)
      then interpret
             registers
-            stack'
-            current
-            "*** retrieve the value of the register whose number is at the top of the stack!"
+            (let 
+               val j = hd(stack') 
+               val regs = registers j
+               in
+                regs::(stack') end)
+              (tl(current))
+            ("The number " ^(Int.toString(registers(hd(stack'))))^ " has been retrieved from register "^(Int.toString(hd(stack'))))  
+            (* "*** retrieve the value of the register whose number is at the top of the stack!" *)
      else case getOp ch of
             SOME oper => 
-              interpret   (* MODIFY! *)
+              interpret   
                 registers
                 (oper (hd(    tl(    stack'))) (hd(stack')) :: (tl(tl(stack'))))
                 []
