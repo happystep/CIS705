@@ -84,8 +84,8 @@ fun interpret registers stack current display = let
                val j = hd(stack') 
                val regs = registers j
                in
-                regs::(stack') end)
-              (tl(current))
+                regs::(tl((stack'))) end) 
+              [] 
             ("The number " ^(Int.toString(registers(hd(stack'))))^ " has been retrieved from register "^(Int.toString(hd(stack'))))  
             (* "*** retrieve the value of the register whose number is at the top of the stack!" *)
      else case getOp ch of
