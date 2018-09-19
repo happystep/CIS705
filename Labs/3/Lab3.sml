@@ -25,11 +25,26 @@ fun height(Leaf(x)) = 0
 (* deepest that returns the height (the maximal distance
 from the root to a leaf) of a binary tree, together with a
 list of the “deepest” nodes *)
-fun deepest (Leaf(x)) = (height(x), x::[])
+fun deepest (Leaf(x)) = (0, [x])
     | deepest (Node(x,y)) = 
     if (height(x) < height(y))
-        then deepest(y)
-    else deepest(x) 
+        then
+            let val (l,k) = deepest(y)
+                in 
+                (l+1, k)  
+                end
+    else if (height(x) = height(y)) 
+        then
+            let val (lx,kx) = deepest(x)
+                val (ly,ky) = deepest(y)
+                in 
+                    (ly+1, kx@ky)
+            end
+    else 
+        let val (i,j) = deepest(x) 
+            in 
+            (i+1,j)
+        end
 
 (* foldt takes an operation, a function and a tree and returns the operation applied on the values of the tree *)
 fun foldt operation function (Leaf(x)) = function(x)
