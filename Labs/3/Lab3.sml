@@ -15,6 +15,13 @@ val Tree1 = Node (
 fun print_tree f (Leaf (x)) = f(x)
     | print_tree f (Node (x, y)) = (print_tree(f) (x)) ^ " and " ^  (print_tree(f) (y)) 
 
+(* This is a helper function for deepest, it returns the height of a Tree *)
+fun height(Leaf(x)) = 0 
+    | height(Node(x,y)) =
+    if (height(x) < height(y))
+        then 1 + height(y) 
+    else 1 + height(x) 
+
 (* deepest that returns the height (the maximal distance
 from the root to a leaf) of a binary tree, together with a
 list of the “deepest” nodes *)
@@ -22,12 +29,7 @@ fun deepest (Leaf(x)) = (height(x), x::[])
     | deepest (Node(x,y)) = 
     if (height(x) < height(y))
         then deepest(y)
-    else deepest(x)
-and height(Leaf(x)) = 0 
-    | height(Node(x,y)) =
-    if (height(x) < height(y))
-        then 1 + height(y) 
-    else 1 + height(x) 
+    else deepest(x) 
 
 (* foldt takes an operation, a function and a tree and returns the operation applied on the values of the tree *)
 fun foldt operation function (Leaf(x)) = function(x)
