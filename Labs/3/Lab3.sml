@@ -1,3 +1,5 @@
+(* CIS 705 | Luis Bobadilla | Lab 3 *)
+
 (* Definition of a Binary Tree *)
 datatype 'a BinTree = Leaf of 'a
     | Node of 'a BinTree * 'a BinTree
