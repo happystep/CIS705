@@ -1,0 +1,219 @@
+<html>
+  <head>
+    <title>CIS 505/705 Assignment #2</title>
+  </head>
+
+  <body>
+    <h1>CIS 505/705, (Introduction to) Programming Languages, Fall 2018.</h1>
+<h2>Assignment #2 (25 points). Due on Monday, October 15, 2018, 8am</h2>
+Use SML/NJ to write an interpreter for a simple imperative language <tt>L</tt>
+which  
+manipulates integers and arrays of integers,
+and which
+reads from an input stream and writes to an output stream.
+
+<h3>Language Syntax</h3>
+The syntax of <tt>L</tt> is given by the grammar
+<pre>
+P : Program
+C : Command
+E : Expression
+D : Declaration
+N : Numeral
+I : Identifier
+
+P ::= D C
+
+C ::=  skip |  C1 ; C2  |  if E { C1 } { C2 }  |  while E { C }  
+   |  I = E   |  I [ E ] = E  | output E  |  input I
+
+E ::=  N  |  I  |  I [ E ]  |  (E1 + E2)  |  (E1 * E2)  |  (E1 - E2)
+
+D ::= int I; D2
+   |  array I N ; D2 
+   |    &lt;nothing&gt;
+
+N ::=  strings of digits
+
+I ::=  strings of letters or digits, starting with a letter, 
+           not including keywords
+</pre>
+
+<h3>Language Semantics (Informal)</h3>
+
+<h4>Integers</h4>
+The basic type is integers, of which
+the positive integers are considered true
+(for tests in <tt>if</tt> and <tt>while</tt> commands),
+whereas zero and the negative integers are considered false.
+<p>
+Integer variables must be declared in the beginning of the program,
+using the <tt>int</tt> construct.
+<p>
+The default value of an integer variable (before it is first assigned to)
+is zero.
+<p>
+<h4>Arrays</h4>
+In the beginning of a program, one can also declare array variables,
+using the construct <tt>array</tt> <i>A</i> <i>n</i> with <i>n</i> a constant.
+This creates an array <i>A</i> with <i>n</i> elements, which can be accessed
+as <i>A[0]</i>,...,<i>A[n-1]</i> (other references are invalid).
+Initially, these elements are all zero.
+<p>
+<h4>Locations</h4>
+Rather than letting the interpreter directly associate variables to values,
+it is convenient (and crucial for implementing more advanced languages)
+to explicitly model <em>memory locations</em>.
+<p>
+<h4>Stores</h4>
+A store maps locations to values. Executing a command may change the store,
+whereas evaluating an expression will not change the store.
+<p>
+<h4>Environments</h4>
+We have two environments: the integer environment maps integer
+variables to locations, whereas the array environment maps array variables
+to sequences of locations. These environments are created when processing
+the declarations, and are never subsequently modified.
+(The same variable name may appear in both
+environments but I wouldn't recommend that programming style.)
+<p>
+<h4>Expressions</h4>
+To evaluate an expression, we need the two environments (to find the
+locations of variables and array elements) as well as the store (to find the value in
+a location).
+<p>
+Since there must be parentheses around subcomputations,
+there is no ambiguity in how to calculate an arithmetic expression.
+<p>
+<h4>Commands</h4>
+The interpreter executes commands by updating
+the store, the input stream, and the output stream.
+<ul>
+<li>
+The command <tt>skip</tt> does nothing, while &quot;;&quot;
+denotes sequential composition.
+<p>
+<li>
+The conditional <tt>if</tt> and the looping construct
+<tt>while</tt> behaves as one would expect (given the above
+remark about which values are true/false).
+<p>
+Observe that a statement <tt>while E {C}</tt> is equivalent to
+<tt>if E {C; while E {C}} {skip}</tt>
+<p>
+<li>
+<tt>output</tt> appends a value to the output stream;
+<tt>input</tt> takes a value from the input stream.
+<p>
+<li>
+An assignment <tt>x = E</tt> stores the value of the expression
+<tt>E</tt> in the location denoted by the integer variable <tt>x</tt>.
+<p>
+<li>
+An assignment <tt>A[i] = E</tt> stores the value of the expression
+<tt>E</tt> in the <tt>i</tt>th location of the array variable <tt>A</tt>
+<p>
+</ul>
+
+<h3>Example Programs</h3>
+As a simple example of a program written in <tt>L</tt>, 
+consider the following that reads two numbers from input and returns their sum:
+<pre>
+   int n; int m; input n; input m; output (n+m)
+</pre>
+Your interpreter, given the above program and the input list [7,2],
+should thus return the list [9].
+<p>
+We can program the factorial function:
+<pre>
+   int n; int fac; input n; output n; fac = 1; while n {fac = (fac * n); n = (n-1)}; output fac
+</pre>
+Your interpreter, given the above program and the input list [4],
+should thus return the list [4,24].
+<p>
+We may even write a loop that computes the factorial of each value in
+the input stream, up until the first zero:
+<pre>
+   int n; int fac; input n; while n {output n; fac = 1; while n {fac = (fac * n); n = (n-1)}; output fac; input n}
+</pre>
+Your interpreter, given the above program and the input list [3,6,5,0,4],
+should return the list [3,6,6,720,5,120].
+<p>
+Using arrays, we may implement the 
+<a href="https://en.wikipedia.org/wiki/Insertion_sort">insertion sort</a>
+algorithm:
+<pre>
+  int n; int m; int x; int i; int j; int t;
+  array A 100; input n; m = n; i = 0;
+  while m {input x; A[i] = x; i = (i + 1); m = (m - 1)}; i = 1;
+  while (n - i) {j = i;
+     while j {
+        if (A[(j-1)] - A[j])
+          {t = A[j]; A[j] = A[(j-1)]; A[(j-1)] = t; j = (j-1)}
+          {j = 0}};
+     i = (i + 1)};
+  i = 0; while (n - i) {output A[i]; i = (i + 1)}
+</pre>
+Your interpreter, given the above program (you may need to put everything on one line) and the input list [8,11,3,5,9,7,14,2,10]
+(with the first input 8 denoting the number of subsequent elements),
+should return the list [2,3,5,7,9,10,11,14].
+<p>
+<h3>Functionality of Interpreter</h3>
+Your interpreter should take an <tt>L</tt> program,
+and a list of input values to be read successively,
+and return a list of the values printed.
+<p>
+For example, typing
+<pre>
+  Interpret "int n; int m; input n; input m; output (n+m)" [7,2];
+</pre>
+should make SML respond <tt>val it = [9] : int list</tt>.
+<p>
+To allow you to focus on the semantic aspects, a 
+parser has been provided for you.
+It converts an input string
+into operator trees that are represented using
+SML datatypes.
+<p>
+To further help you, a skeleton interpreter has also been provided.
+
+<h3>Error Messages</h3>
+If your interpreter encounters an error,
+it should still terminate gracefully
+but with an informative message as designed by you.
+<br>
+Possible errors are:
+<ul>
+<li>
+An integer variable, or an array variable, is used without having been declared.
+<li>
+The program tries to read from an empty input stream.
+<li>
+An array is referenced with an index that is out of the proper range.
+</ul>
+
+
+<h3>Guidelines for Writing the Interpreter</h3>
+You should build on the program given in the file
+<tt>HW2_skeleton.sml</tt> which is uploaded on Canvas.
+
+<p>
+<h3>Submission</h3>
+You must do this exercise on your own.
+<p>
+Submit to Canvas an .sml-file containing the
+interpreter.
+<p>
+Do <em>not</em> 
+expect the instructor or the TAs to answer any questions after Friday, October 12, at 4pm.
+<p>
+<b>Important</b>:
+It is certainly OK to discuss the assignment with 
+the instructor, TAs, or your fellow students, 
+but all the coding must be typed by you,
+and all the concepts in the coding must be stored in your head so that 
+you can reproduce them on demand.
+    <hr>
+    <address>Torben Amtoft</address>
+  </body>
+</html>
