@@ -1,7 +1,14 @@
+(* 
+  * CIS 705 - Programming Languages
+  * Homework Assignment 2
+  * Luis Bobadilla
+  *)
+
 (*
    The Interpret function assumes a "parse" function, 
       written in another file.
 *)
+use "HW2_parser.sml";
 
 (* ABSTRACT SYNTAX
 
@@ -92,9 +99,9 @@ fun StoUpdate loc v sto = (loc,v) :: sto
      ExpEval: Exp -> Envs -> Store -> Num 
 *)
 
-fun ExpEval (NumE n) _ _ = 27 (* *** MODIFY *)
-|   ExpEval (IdE id) (ienv,_) sto = 28 (* *** MODIFY *)
-|   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = 29 (* *** MODIFY *)
+fun ExpEval (NumE n) _ _ = n (* *** MODIFY just return the number as stated above*)
+|   ExpEval (IdE id) (ienv,_) sto = IEnvLookup ienv id (* *** MODIFY think about looking up the environment to find the store to find value*)
+|   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = 29 (* *** MODIFY this one will be the tricky one *)
 |   ExpEval (AddE(exp1,exp2)) envs sto =
       let val v1 = ExpEval exp1 envs sto
           val v2 = ExpEval exp2 envs sto
@@ -136,8 +143,10 @@ CommExec: Comm -> (IntEnv * ArrayEnv) -> RunTimeState -> RunTimeState
 *)
 
 fun CommExec SkipC envs state = state
-|   CommExec (SeqC(cmd1,cmd2)) envs state = (* *** MODIFY *)
-          CommExec cmd1 envs state
+|   CommExec (SeqC(cmd1,cmd2)) envs state = (* *** MODIFY ied *)
+      let val state1 = CommExec cmd1 envs state
+      in CommExec cmd2 envs state1 
+      end
 |   CommExec (IfC(exp,cmd1,cmd2)) envs (state as (sto,_,_)) = (* *** MODIFY *)
           CommExec cmd2 envs state
 |   CommExec (WhileC(exp,cmd)) envs state = (* *** MODIFY *)
@@ -154,8 +163,10 @@ fun CommExec SkipC envs state = state
        in (StoUpdate loc v sto, inp, outp)
       end
 |   CommExec (OutputC exp) envs (sto,inp,outp) =
-          (sto, inp, (51 :: outp))  (* *** MODIFY *)
-                    (* we eventually reverse the order *)
+      let val v = ExpEval exp envs sto
+      in (sto, inp, (v :: outp))  (* *** MODIF ied *)
+      end
+                  (* we eventually reverse the order *)
 |   CommExec (InputC id) (ienv,_) (sto,inp,outp) = (* *** MODIFY *)
           (StoUpdate 7 (hd inp) sto, (tl inp), outp)
 
