@@ -49,6 +49,9 @@ datatype Prog =
 
 exception IntNotDeclared of string
 exception ArrayNotDeclared of string
+
+exception InputExhausted
+
 (* *** ADD A FEW MORE *)
 
 (* ENVIRONMENTS and STORES *)
@@ -100,7 +103,10 @@ fun StoUpdate loc v sto = (loc,v) :: sto
 *)
 
 fun ExpEval (NumE n) _ _ = n (* *** MODIFY just return the number as stated above*)
-|   ExpEval (IdE id) (ienv,_) sto = IEnvLookup ienv id (* *** MODIFY think about looking up the environment to find the store to find value*)
+|   ExpEval (IdE id) (ienv,_) sto = 
+      let val loc = IEnvLookup ienv id
+      in StoLookup sto loc 
+      end (* *** MODIFY think about looking up the environment to find the store to find value*)
 |   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = 29 (* *** MODIFY this one will be the tricky one *)
 |   ExpEval (AddE(exp1,exp2)) envs sto =
       let val v1 = ExpEval exp1 envs sto
@@ -147,14 +153,20 @@ fun CommExec SkipC envs state = state
       let val state1 = CommExec cmd1 envs state
       in CommExec cmd2 envs state1 
       end
-|   CommExec (IfC(exp,cmd1,cmd2)) envs (state as (sto,_,_)) = (* *** MODIFY *)
-          CommExec cmd2 envs state
-|   CommExec (WhileC(exp,cmd)) envs state = (* *** MODIFY *)
-          CommExec cmd envs state
+|   CommExec (IfC(exp,cmd1,cmd2)) envs (state as (sto,_,_)) = (* *** MODIFY ied *)
+          let val v = ExpEval exp envs sto 
+          in if v > 0 then CommExec cmd1 envs state
+          else CommExec cmd2 envs state
+          end
+|   CommExec (WhileC(exp,cmd)) envs state = (* *** MODIFY ied --- THIS IS NOT TYPE CHECKING OR GETTING STUCK IN AN INFNITE LOOOP*)
+      let val v = ExpEval exp envs (#1(state))
+      in if v > 0 then CommExec(SeqC(cmd, WhileC(exp,cmd))) envs state
+      else state
+      end
 |   CommExec (AssignC(id,exp)) (envs as (ienv,_)) (sto, inp, outp) =
-      let val v = 47 (* *** MODIFY *)
-          val loc = 48 (* *** MODIFY *)
-       in (StoUpdate loc v sto, inp, outp)
+      let val loc = IEnvLookup ienv id (* *** MODIFY ied*)
+          val v = ExpEval exp envs sto (* *** MODIFY ied*)
+       in ((StoUpdate loc v sto), inp, outp)
       end
 |   CommExec (AAssignC(id,exp1,exp2)) (envs as (_,aenv)) (sto, inp, outp) =
       let val v = 49 (* *** MODIFY *)
@@ -167,9 +179,11 @@ fun CommExec SkipC envs state = state
       in (sto, inp, (v :: outp))  (* *** MODIF ied *)
       end
                   (* we eventually reverse the order *)
-|   CommExec (InputC id) (ienv,_) (sto,inp,outp) = (* *** MODIFY *)
-          (StoUpdate 7 (hd inp) sto, (tl inp), outp)
-
+|   CommExec (InputC id) (ienv,_) (sto,inp,outp) = (* *** MODIFY ied *)
+      let val env = IEnvLookup ienv id 
+      in
+          ((StoUpdate env (hd inp) sto), (tl inp), outp)
+      end
 (* RUNNING THE PROGRAM *)
 
 fun ProgRun (ProgP(decl,comm)) inp =
