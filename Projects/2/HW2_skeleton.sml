@@ -1,7 +1,8 @@
 (* 
   * CIS 705 - Programming Languages
   * Homework Assignment 2
-  * Luis Bobadilla
+  * ORIGINAL SKELETON BY: Dr. Torben Amtoft
+  * MODIFIED BY: Luis Bobadilla
   *)
 
 (*
@@ -107,7 +108,10 @@ fun ExpEval (NumE n) _ _ = n (* *** MODIFY just return the number as stated abov
       let val loc = IEnvLookup ienv id
       in StoLookup sto loc 
       end (* *** MODIFY think about looking up the environment to find the store to find value*)
-|   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = 29 (* *** MODIFY this one will be the tricky one *)
+|   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = (* *** MODIFY this one will be the tricky one *)
+      let val loc = AEnvLookup aenv id (ExpEval exp envs sto)
+      in StoLookup sto loc
+      end
 |   ExpEval (AddE(exp1,exp2)) envs sto =
       let val v1 = ExpEval exp1 envs sto
           val v2 = ExpEval exp2 envs sto
@@ -132,7 +136,7 @@ fun DeclExec (IntD id) (ienv, aenv, next) =
       (IEnvInsert id next ienv, aenv, next+1)
 |   DeclExec (ArrayD(id,n)) (ienv, aenv, next) =
       (ienv,
-       aenv, (* *** MODIFY *)
+       AEnvInsert id (fn x => x + next) aenv, (* *** MODIFY ---I'm not sure what n is, does it map (int -> Loc)???? That is the second parameter of the fn()  *)
        next + n)
 |   DeclExec (SeqD(decl1,decl2)) envs =
         DeclExec decl2 (DeclExec decl1 envs)
@@ -158,7 +162,7 @@ fun CommExec SkipC envs state = state
           in if v > 0 then CommExec cmd1 envs state
           else CommExec cmd2 envs state
           end
-|   CommExec (WhileC(exp,cmd)) envs state = (* *** MODIFY ied --- THIS IS NOT TYPE CHECKING OR GETTING STUCK IN AN INFNITE LOOOP*)
+|   CommExec (WhileC(exp,cmd)) envs state = (* *** MODIFY ied *)
       let val v = ExpEval exp envs (#1(state))
       in if v > 0 then CommExec(SeqC(cmd, WhileC(exp,cmd))) envs state
       else state
@@ -169,9 +173,9 @@ fun CommExec SkipC envs state = state
        in ((StoUpdate loc v sto), inp, outp)
       end
 |   CommExec (AAssignC(id,exp1,exp2)) (envs as (_,aenv)) (sto, inp, outp) =
-      let val v = 49 (* *** MODIFY *)
+      let val v = ExpEval exp2 envs sto (* *** MODIFY this is my guess, because isn't exp2 what we want to put in that location?? after we eval *)
           val k = ExpEval exp1 envs sto
-          val loc = 50 (* *** MODIFY *)
+          val loc = AEnvLookup aenv id k (* *** MODIFY AEnvLookup: ArrayEnv -> Id -> int -> Loc *)
        in (StoUpdate loc v sto, inp, outp)
       end
 |   CommExec (OutputC exp) envs (sto,inp,outp) =
