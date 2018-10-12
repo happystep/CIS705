@@ -51,7 +51,17 @@ datatype Prog =
 exception IntNotDeclared of string
 exception ArrayNotDeclared of string
 
+(* these are the two other possible error that I need to implement *)
+(* Error Messages
+If your interpreter encounters an error, it should still terminate gracefully but with an informative message as designed by you. 
+Possible errors are:
+An integer variable, or an array variable, is used without having been declared.
+The program tries to read from an empty input stream.
+An array is referenced with an index that is out of the proper range *)
+
+exception ArrayOutOfBounds of string;
 exception InputExhausted
+exception Error
 
 (* *** ADD A FEW MORE *)
 
@@ -110,7 +120,10 @@ fun ExpEval (NumE n) _ _ = n (* *** MODIFY just return the number as stated abov
       end (* *** MODIFY think about looking up the environment to find the store to find value*)
 |   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = (* *** MODIFY this one will be the tricky one *)
       let val loc = AEnvLookup aenv id (ExpEval exp envs sto)
-      in StoLookup sto loc
+      in
+     (*  if loc is in range in array  then *)
+       StoLookup sto loc
+      (* else raise ArrayOutOfBounds id *)
       end
 |   ExpEval (AddE(exp1,exp2)) envs sto =
       let val v1 = ExpEval exp1 envs sto
@@ -185,9 +198,15 @@ fun CommExec SkipC envs state = state
                   (* we eventually reverse the order *)
 |   CommExec (InputC id) (ienv,_) (sto,inp,outp) = (* *** MODIFY ied *)
       let val env = IEnvLookup ienv id 
-      in
-          ((StoUpdate env (hd inp) sto), (tl inp), outp)
-      end
+      in    (* I want to do input exhausted here somehow --- currently it doens't work... *)
+      if inp = []
+       then raise InputExhausted
+      else 
+      ((StoUpdate env (hd inp) sto), (tl inp), outp) 
+       end
+  
+      
+
 (* RUNNING THE PROGRAM *)
 
 fun ProgRun (ProgP(decl,comm)) inp =
@@ -203,4 +222,11 @@ fun Interpret prog inp = ProgRun (parse prog) inp
             (print ("*** error: "^x^" used as integer but is not declared\n"); [0])
       | (ArrayNotDeclared x) =>
             (print ("*** error: "^x^" used as array but is not declared\n"); [0])
-  (* *** ADD A FEW MORE *)
+      | (ArrayOutOfBounds x) =>
+            (print ("*** error: array "^x^" is out of bounds at desired index\n"); [0])
+      | InputExhausted =>
+            (print ("*** error: input stream prematurely exhausted\n"); [0])
+      | Error =>
+            (print ("*** error: ERROR\n"); [0])
+
+
