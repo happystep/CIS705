@@ -121,9 +121,7 @@ fun ExpEval (NumE n) _ _ = n (* *** MODIFY just return the number as stated abov
 |   ExpEval (ArrE(id,exp)) (envs as (_,aenv)) sto = (* *** MODIFY this one will be the tricky one *)
       let val loc = AEnvLookup aenv id (ExpEval exp envs sto)
       in
-     (*  if loc is in range in array  then *)
        StoLookup sto loc
-      (* else raise ArrayOutOfBounds id *)
       end
 |   ExpEval (AddE(exp1,exp2)) envs sto =
       let val v1 = ExpEval exp1 envs sto
@@ -149,7 +147,7 @@ fun DeclExec (IntD id) (ienv, aenv, next) =
       (IEnvInsert id next ienv, aenv, next+1)
 |   DeclExec (ArrayD(id,n)) (ienv, aenv, next) =
       (ienv,
-       AEnvInsert id (fn x => x + next) aenv, (* *** MODIFY ---I'm not sure what n is, does it map (int -> Loc)???? That is the second parameter of the fn()  *)
+       AEnvInsert id (fn x => if x >  n then raise ArrayOutOfBounds id else x + next) aenv, (* *** MODIFY ied  *)
        next + n)
 |   DeclExec (SeqD(decl1,decl2)) envs =
         DeclExec decl2 (DeclExec decl1 envs)
